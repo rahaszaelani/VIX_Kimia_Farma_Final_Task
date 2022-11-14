@@ -1,0 +1,43 @@
+QUERY Datamart Base Master Barang dan Master Penjualan Pelanggan
+
+---Table master barang
+SELECT bds.kode_barang,bds.nama_barang,bds.kemasan,bds.harga,bt.sektor,bt.tipe,bt.nama_tipe,bt.kode_lini,bt.lini,bds.brand
+FROM barang_ds AS bds
+INNER JOIN barang_table AS bt ON bt.kode_barang=bds.kode_barang
+GROUP BY 1,2,3,4,5,6,7,8,9,10
+
+
+--Table Master penjualan dan pelanggan :
+
+SELECT plt.id_customer,pjt.id_distributor,pjt.id_cabang,pjt.id_invoice,pjt.id_barang,
+	 	plt.nama,pjt.tanggal,pjt.jumlah_barang,pjt.harga,pjt.mata_uang,pjt.brand_id,pjt.lini,plt.cabang_sales,plt.level,plt.group
+FROM pelanggan_table AS plt
+INNER JOIN penjualan_table AS pjt ON pjt.id_customer=plt.id_customer
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+
+Query Datamart Aggregate
+
+--Table Agregat## 
+Menggabuungan table master_barang dan table master _penjualan_pelanggan
+
+CREATE TABLE master_table AS 
+SELECT mpp.id_customer,mpp.id_distributor,mpp.id_cabang,mpp.id_invoice,mtb.kode_barang,mtb.nama_barang,mtb.kemasan,mtb.brand,
+	mpp.nama,mpp.tanggal,mpp.jumlah_barang,mpp.harga,mpp.mata_uang,mtb.tipe, (mpp.jumlah_barang * mpp.harga) AS total_spend
+FROM master_penjualan_pelanggan AS mpp
+INNER JOIN master_table_barang AS mtb ON mtb.lini = mpp.lini
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+
+
+--Total pendapatan brand per bulan
+
+select brand, sum(jumlah_barang * harga),date_part('month', tanggal) as month
+from master_table
+group by 1,3
+order by 3
+
+--Total Revenue Per Lokasi Penjualan
+select nama AS lokasi_penjual, sum(jumlah_barang * harga) as revenue,
+avg(jumlah_barang) as average_quantity
+from master_table
+group by 1
+order by 2 ASC
